@@ -1,0 +1,55 @@
+
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Error Page</title><meta name="color-scheme" content="light dark"><meta name="robots" content="noindex,nofollow">
+<style>
+body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:linear-gradient(135deg,#f8fafc,#e0f2fe);color:#1f2937;display:flex;justify-content:center;align-items:center;text-align:center;height:100vh}
+.container{max-width:560px;width:100%;padding:24px;background:#fff;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.08);border:1px solid #e5e7eb}
+h1{font-size:1.4rem;margin:0 0 10px;color:#0f172a}
+p{margin:0 0 16px;color:#475569}
+.row{background:#eff6ff;padding:12px;border-radius:8px;margin-bottom:10px;color:#1e3a8a;border:1px solid #bfdbfe;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;text-align:left}
+.label{color:#1e40af}
+.val{font-weight:600;word-break:break-word}
+.btn{border:1px solid #60a5fa;background:#1d4ed8;color:#fff;font-size:.95rem;padding:6px 10px;border-radius:8px;cursor:pointer}
+.info{font-size:.95rem;color:#334155;margin-top:8px}
+@media(max-width:480px){.container{padding:18px}.row{grid-template-columns:1fr}.btn{width:100%}}
+@media(prefers-color-scheme:dark){
+body{background:#0b1220;color:#e5e7eb}
+.container{background:#0f172a;border-color:#1f2937;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+h1{color:#e2e8f0}p{color:#cbd5e1}
+.row{background:#111827;color:#e5e7eb;border-color:#1f2937}
+.label{color:#93c5fd}.btn{background:#2563eb;border-color:#3b82f6}
+.info{color:#cbd5e1}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Something went wrong. We’re Sorry for the Inconvenience</h1>
+  <p>Please share the details below with our support team so we can assist you promptly.</p>
+
+  <div class="row">
+    <span class="label">Reference Code:</span>
+    <span id="refCode" class="val">0.cca4c117.1778301730.80a589f</span>
+    <button class="btn" data-tgt="refCode" aria-label="Copy reference code">Copy</button>
+  </div>
+
+  <div class="row">
+    <span class="label">Client IP:</span>
+    <span id="clientIp" class="val">34.34.254.58</span>
+    <button class="btn" data-tgt="clientIp" aria-label="Copy client IP">Copy</button>
+  </div>
+
+  <div class="info">Timestamp: <strong id="ts"></strong></div>
+  <div class="info">Support Email: <strong>support@tcsion.com</strong></div>
+</div>
+
+<script>
+function fmtTS(d){const P=n=>String(n).padStart(2,'0');const y=d.getFullYear(),m=P(d.getMonth()+1),da=P(d.getDate()),h=P(d.getHours()),mi=P(d.getMinutes()),s=P(d.getSeconds());const off=d.getTimezoneOffset(),sign=off<=0?'+':'-',abs=Math.abs(off),oh=P(Math.floor(abs/60)),om=P(abs%60);return `${y}-${m}-${da} ${h}:${mi}:${s} GMT${sign}${oh}:${om}`;}
+(function(){const el=document.getElementById('ts');if(el)el.textContent=fmtTS(new Date());})();
+function copyId(id){const el=document.getElementById(id);if(!el)return;const t=el.textContent.trim();if(!t)return;const btn=document.querySelector('.btn[data-tgt="'+id+'"]');const ok=()=>{if(btn){const o=btn.textContent;btn.textContent='Copied!';btn.disabled=true;setTimeout(()=>{btn.textContent=o;btn.disabled=false;},1200);}};if(navigator.clipboard?.writeText){navigator.clipboard.writeText(t).then(ok).catch(()=>fb(t,ok));}else fb(t,ok);}
+function fb(text,done){const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}document.body.removeChild(ta);done&&done();}
+document.querySelectorAll('.btn').forEach(b=>b.addEventListener('click',function(){const id=this.getAttribute('data-tgt');if(id)copyId(id);}));
+</script>
+</body>
+</html>

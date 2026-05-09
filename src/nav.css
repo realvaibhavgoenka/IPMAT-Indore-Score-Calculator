@@ -1,0 +1,353 @@
+/* Import Poppins and Inter */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@700&family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* ─── ENTRANCE UG PREMIUM GLOBAL NAV BAR ─────────────────────────── */
+.eug-nav-wrapper {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: rgba(255, 255, 255, 0.92);
+  border-bottom: 1px solid rgba(233, 232, 240, 0.7);
+  position: sticky;
+  top: 0;
+  z-index: 99999;
+  width: 100%;
+  backdrop-filter: blur(14px) saturate(190%);
+  -webkit-backdrop-filter: blur(14px) saturate(190%);
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.03);
+}
+
+.eug-nav-container {
+  max-width: 1340px;
+  /* Slightly wider for modern screens */
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 84px;
+  /* Slightly taller for breathing room */
+}
+
+.eug-logo-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.eug-logo {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.7rem;
+  /* Improved font size */
+  font-weight: 700;
+  color: #004c6b;
+  text-decoration: none;
+  letter-spacing: -0.03em;
+}
+
+.eug-logo span {
+  color: #00ff88;
+}
+
+.eug-logo sup {
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #004c6b;
+  text-transform: uppercase;
+  position: relative;
+  top: -1.2em;
+  opacity: 0.8;
+}
+
+.eug-nav-links {
+  display: flex;
+  gap: 28px;
+  /* Balanced spacing */
+  align-items: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.eug-nav-links li {
+  position: relative;
+}
+
+/* Standard Links Styling */
+.eug-nav-links li>a {
+  text-decoration: none;
+  color: #2d2b3d;
+  /* Darker for better contrast */
+  font-size: 15px;
+  /* Improved font size */
+  font-weight: 700;
+  position: relative;
+  padding: 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+
+/* Underline animation */
+.eug-nav-links li:not(.eug-has-dropdown):not(:last-child) a::after {
+  content: '';
+  position: absolute;
+  bottom: 6px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #004c6b;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.3s cubic-bezier(0.65, 0.05, 0.36, 1);
+}
+
+.eug-nav-links li:not(.eug-has-dropdown):not(:last-child) a:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+.eug-nav-links li:hover>a {
+  color: #004c6b;
+}
+
+/* ─── DROPDOWN MENU ────────────────────────────────────────── */
+.eug-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  background: #ffffff;
+  min-width: 300px;
+  /* Wider for clarity */
+  border-radius: 18px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(233, 232, 240, 1);
+  padding: 20px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+  z-index: 100;
+}
+
+.eug-has-dropdown:hover .eug-dropdown-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.eug-dropdown-section {
+  margin-bottom: 18px;
+}
+
+.eug-dropdown-section:last-child {
+  margin-bottom: 0;
+}
+
+.eug-dropdown-header {
+  font-size: 12px;
+  /* Improved font size */
+  text-transform: uppercase;
+  font-weight: 800;
+  color: #004c6b;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+  padding-left: 12px;
+  opacity: 0.5;
+}
+
+.eug-dropdown-item {
+  display: block;
+  text-decoration: none;
+  color: #3d3b52;
+  font-size: 14.5px;
+  /* Improved font size */
+  font-weight: 500;
+  padding: 10px 14px;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.eug-dropdown-item:hover {
+  background: rgba(0, 76, 107, 0.06);
+  color: #004c6b;
+  padding-left: 18px;
+}
+
+/* Chevron Icon */
+.eug-chevron {
+  transition: transform 0.3s ease;
+  opacity: 0.7;
+}
+
+.eug-has-dropdown:hover .eug-chevron {
+  transform: rotate(180deg);
+  opacity: 1;
+}
+
+/* ─── LOGIN BUTTON + STATUS DOT ─────────────────────────── */
+.eug-enroll-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.eug-btn-enroll {
+  background: #004c6b;
+  color: #ffffff !important;
+  padding: 12px 32px;
+  border-radius: 50px;
+  font-size: 15px;
+  /* Improved font size */
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  box-shadow: 0 8px 20px rgba(0, 76, 107, 0.2);
+  border: 2px solid transparent;
+}
+
+.eug-btn-enroll:hover {
+  background: #ffffff;
+  color: #004c6b !important;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0, 76, 107, 0.15);
+  border-color: #004c6b;
+}
+
+.eug-status-dot {
+  width: 10px;
+  height: 10px;
+  background-color: #00ff88;
+  border-radius: 50%;
+  position: relative;
+}
+
+.eug-status-dot::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: #00ff88;
+  border-radius: 50%;
+  animation: eug-pulse 2s infinite;
+}
+
+@keyframes eug-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+}
+
+/* ─── MOBILE HAMBURGER ────────────────────────── */
+.eug-menu-checkbox {
+  display: none;
+}
+
+.eug-menu-btn {
+  display: none;
+  cursor: pointer;
+  padding: 10px;
+}
+
+/* For Medium/Large Tablets */
+@media (max-width: 1150px) {
+  .eug-nav-links {
+    gap: 16px;
+  }
+
+  .eug-nav-links li>a {
+    font-size: 14px;
+  }
+}
+
+/* Responsive Mobile Layout */
+@media (max-width: 1000px) {
+  .eug-menu-btn {
+    display: block;
+  }
+
+  .eug-nav-links {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 84px;
+    left: 0;
+    width: 100%;
+    background: #ffffff;
+    padding: 24px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    border-top: 1px solid #e9e8f0;
+    gap: 8px;
+    align-items: flex-start;
+    max-height: calc(100vh - 84px);
+    overflow-y: auto;
+  }
+
+  .eug-menu-checkbox:checked~.eug-nav-links {
+    display: flex;
+  }
+
+  .eug-nav-links li {
+    width: 100%;
+  }
+
+  .eug-nav-links li>a {
+    padding: 14px 10px;
+    width: 100%;
+    font-size: 16px;
+    /* Larger for touch */
+    border-radius: 8px;
+  }
+
+  .eug-nav-links li>a:active {
+    background: #f8f9fa;
+  }
+
+  .eug-has-dropdown {
+    position: relative;
+  }
+
+  .eug-dropdown-menu {
+    position: static;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    box-shadow: none;
+    border: none;
+    padding: 0 0 10px 15px;
+    margin-top: 0;
+    display: block;
+    min-width: 100%;
+    background: #fcfcfd;
+    border-left: 2px solid #e9e8f0;
+    border-radius: 0;
+  }
+
+  .eug-enroll-group {
+    width: 100%;
+    flex-direction: column-reverse;
+    align-items: center;
+    margin-top: 24px;
+    gap: 16px;
+  }
+
+  .eug-btn-enroll {
+    width: 100%;
+    text-align: center;
+    padding: 16px;
+  }
+
+  .eug-status-dot {
+    margin-bottom: 8px;
+  }
+}
