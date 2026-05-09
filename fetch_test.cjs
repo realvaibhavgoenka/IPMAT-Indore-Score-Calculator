@@ -1,0 +1,1 @@
+fetch('https://script.google.com/macros/s/AKfycbx4Vs8mNi0FJmGqexcoIphPWENDbCWxaxMX0juOBpwpLADgFA-qz0L1fWaWw_TyHusebw/exec', {method: 'POST', body: JSON.stringify({studentName: 'Test', email: 'test@test.com', phone: '1234567890', score: 100, timestamp: new Date().toISOString()})}).then(r=>r.text()).then(r=>console.log('RES:',r)).catch(console.error)
