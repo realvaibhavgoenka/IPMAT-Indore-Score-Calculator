@@ -254,7 +254,7 @@ export default function App() {
     
     const inputStr = urlInput.trim();
     if (!inputStr) {
-        setError("Please enter a valid URL or paste HTML source.");
+        setError("Please enter a valid URL.");
         return;
     }
 
@@ -293,7 +293,7 @@ export default function App() {
     }
 
     try { new URL(inputStr); } catch (_) {
-        setError("Invalid URL format. Please ensure it starts with http:// or https://. If blocked, open your link, Right Click -> View Page Source -> Copy all -> Paste here.");
+        setError("Invalid URL format. Please ensure it starts with http:// or https://. If blocked, try again later.");
         setIsProcessing(false);
         return;
     }
@@ -301,51 +301,70 @@ export default function App() {
     setProcessingStage('fetching');
 
     try {
-      const encodedUrl = encodeURIComponent(inputStr);
       const targetUrl = inputStr;
-      
       let htmlContent = "";
-      try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 15000);
-          const response = await fetch('/api/fetch-url', { 
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ url: targetUrl }),
-              signal: controller.signal 
-          });
-          clearTimeout(timeoutId);
-          
-          if (response.ok) {
-              const data = await response.json();
-              htmlContent = data.contents;
-          } else {
-              const errorData = await response.json().catch(() => ({}));
-              console.error("Backend fetch failed", response.status, errorData);
-          }
-      } catch (e) {
-          console.error("Fetch request to backend failed", e);
-      }
-      
-      if (!htmlContent) {
-          console.log("Fallback to allorigins raw...");
+
+      // List of robust CORS proxies
+      const proxyUrls = [
+         `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+         `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`,
+         `https://thingproxy.freeboard.io/fetch/${targetUrl}`,
+         `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`
+      ];
+
+      // Also try backend for local environment
+      if (window.location.hostname === 'localhost' || window.location.hostname.includes('.run.app')) {
           try {
-              const fallbackRes = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`);
-              if (fallbackRes.ok) {
-                  htmlContent = await fallbackRes.text();
+              const controller = new AbortController();
+              const timeoutId = setTimeout(() => controller.abort(), 10000);
+              const res = await fetch('/api/fetch-url', { 
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ url: targetUrl }),
+                  signal: controller.signal
+              });
+              clearTimeout(timeoutId);
+              if (res.ok) {
+                  const data = await res.json();
+                  if (data.contents && (data.contents.toLowerCase().includes('<table') || data.contents.toLowerCase().includes('question'))) {
+                      htmlContent = data.contents;
+                  }
               }
-          } catch (err) {
-              console.error("AllOrigins raw fallback failed:", err);
+          } catch(e) {}
+      }
+
+      // Try proxies sequentially
+      if (!htmlContent) {
+          for (let proxy of proxyUrls) {
+              try {
+                  console.log("Trying proxy: ", proxy);
+                  const controller = new AbortController();
+                  const timeoutId = setTimeout(() => controller.abort(), 10000);
+                  const res = await fetch(proxy, { signal: controller.signal });
+                  clearTimeout(timeoutId);
+                  if (res.ok) {
+                      const text = await res.text();
+                      if (text && (text.toLowerCase().includes('<table') || text.toLowerCase().includes('question'))) {
+                          htmlContent = text;
+                          break;
+                      }
+                  }
+              } catch(e) {
+                  console.error("Proxy failed: ", proxy);
+              }
           }
       }
 
-      if (!htmlContent || (!htmlContent.toLowerCase().includes('<table') && !htmlContent.toLowerCase().includes('question'))) {
-          console.log("Fallback to allorigins CORS proxy...");
+      // Final fallback to AllOrigins JSON proxy
+      if (!htmlContent) {
           try {
+              console.log("Fallback to allorigins JSON proxy...");
               const fallbackRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`);
               if (fallbackRes.ok) {
                   const data = await fallbackRes.json();
-                  htmlContent = data.contents;
+                  if (data.contents && (data.contents.toLowerCase().includes('<table') || data.contents.toLowerCase().includes('question'))) {
+                      htmlContent = data.contents;
+                  }
               }
           } catch (err) {
               console.error("AllOrigins fallback failed:", err);
@@ -353,55 +372,7 @@ export default function App() {
       }
 
       if (!htmlContent || (!htmlContent.toLowerCase().includes('<table') && !htmlContent.toLowerCase().includes('question'))) {
-          console.log("Fallback to corsproxy.io...");
-          try {
-              const fallbackRes = await fetch(`https://corsproxy.io/?${encodeURIComponent(targetUrl)}`);
-              if (fallbackRes.ok) {
-                  htmlContent = await fallbackRes.text();
-              }
-          } catch (err) {
-              console.error("Corsproxy fallback failed:", err);
-          }
-      }
-
-      if (!htmlContent || (!htmlContent.toLowerCase().includes('<table') && !htmlContent.toLowerCase().includes('question'))) {
-          console.log("Fallback to thingproxy...");
-          try {
-              const fallbackRes = await fetch(`https://thingproxy.freeboard.io/fetch/${targetUrl}`);
-              if (fallbackRes.ok) {
-                  htmlContent = await fallbackRes.text();
-              }
-          } catch (err) {
-              console.error("Thingproxy fallback failed:", err);
-          }
-      }
-
-      if (!htmlContent || (!htmlContent.toLowerCase().includes('<table') && !htmlContent.toLowerCase().includes('question'))) {
-          console.log("Fallback to jsonp proxy...");
-          try {
-              const fallbackRes = await fetch(`https://jsonp.afeld.me/?url=${encodeURIComponent(targetUrl)}`);
-              if (fallbackRes.ok) {
-                  htmlContent = await fallbackRes.text();
-              }
-          } catch (err) {
-              console.error("jsonp fallback failed:", err);
-          }
-      }
-
-      if (!htmlContent || (!htmlContent.toLowerCase().includes('<table') && !htmlContent.toLowerCase().includes('question'))) {
-          console.log("Fallback to codetabs proxy...");
-          try {
-              const fallbackRes = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`);
-              if (fallbackRes.ok) {
-                  htmlContent = await fallbackRes.text();
-              }
-          } catch (err) {
-              console.error("Codetabs fallback failed:", err);
-          }
-      }
-
-      if (!htmlContent || (!htmlContent.toLowerCase().includes('<table') && !htmlContent.toLowerCase().includes('question'))) {
-          throw new Error("Unable to fetch response sheet content from this URL. This can happen if the link has expired or if the exam portal blocks automated requests. Try copying its HTML Source manually and pasting it here instead. If it keeps failing, try opening the sheet, Right Click -> View Page Source -> Copy All -> Paste here.");
+          throw new Error("Unable to fetch response sheet content from this URL. This can happen if the link has expired or if the exam portal blocks automated requests. Ensure your link is correct and publicly accessible.");
       }
 
       setProcessingStage('analyzing');
@@ -423,7 +394,7 @@ export default function App() {
       }
     } catch (err) {
       let displayMsg = err.message || "An unexpected error occurred.";
-      setError(displayMsg + " If it keeps failing, try opening the sheet, Right Click -> View Page Source -> Copy All -> Paste here.");
+      setError(displayMsg);
       setProcessingStage('idle');
     } finally {
       setIsProcessing(false);
@@ -745,7 +716,7 @@ export default function App() {
             <div className="p-10">
                 <div className="text-center mb-10">
                     <h2 className="text-2xl font-bold text-gray-800">Calculate Your Score</h2>
-                    <p className="text-gray-500 mt-2">Paste your response sheet URL or HTML code to instantly calculate your marks.</p>
+                    <p className="text-gray-500 mt-2">Paste your response sheet URL to instantly calculate your marks.</p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5 mb-6">
@@ -779,11 +750,11 @@ export default function App() {
                 </div>
 
                 <div className="mb-6">
-                    <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Response Sheet URL or HTML Source</label>
+                    <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Response Sheet URL</label>
                     <div className="flex flex-col md:flex-row gap-3">
-                        <textarea 
-                            className="flex-1 p-3 bg-gray-50 border border-gray-200 rounded-xl font-mono text-sm text-gray-900 focus:bg-white focus:ring-2 focus:ring-[#00ff88]/50 focus:border-[#004c6b] focus:outline-none transition-all resize-y min-h-[50px] sm:h-[50px]" 
-                            placeholder="https://... OR paste your HTML Source Code here" 
+                        <input type="text"
+                            className="flex-1 p-3 bg-gray-50 border border-gray-200 rounded-xl font-mono text-sm text-gray-900 focus:bg-white focus:ring-2 focus:ring-[#00ff88]/50 focus:border-[#004c6b] focus:outline-none transition-all min-h-[50px]" 
+                            placeholder="https://..." 
                             value={urlInput} 
                             onChange={(e) => setUrlInput(e.target.value)} 
                         />
