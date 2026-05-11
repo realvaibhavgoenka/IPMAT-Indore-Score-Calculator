@@ -369,7 +369,13 @@ export default function App() {
 
       if (!htmlContent || (!htmlContent.toLowerCase().includes('<table') && !htmlContent.toLowerCase().includes('question'))) {
           console.error("Fetch errors:", fetchErrors.join(' | '));
-          throw new Error("Unable to fetch response sheet content from this URL. This can happen if the link has expired or if the exam portal blocks automated requests. Ensure your link is correct and publicly accessible.");
+          let errorMsg = `Unable to fetch response sheet content from this URL. This can happen if the link has expired or if the exam portal blocks automated requests. Ensure your link is correct and publicly accessible.`;
+          
+          if (!targetUrl.toLowerCase().endsWith('.html') && !targetUrl.toLowerCase().endsWith('.htm')) {
+              errorMsg += ` PLEASE NOTE: Your URL does not end in .html. Please make sure you copied the ENTIRE link.`;
+          }
+          
+          throw new Error(errorMsg);
       }
 
       setProcessingStage('analyzing');
@@ -600,7 +606,11 @@ export default function App() {
             marks = markingOpts.correct;
         } else if (correctOptIndex) {
             status = 'Incorrect';
-            marks = isNumerical ? 0 : markingOpts.incorrect;
+            let applyNegativeMarking = true;
+            if (isNumerical) {
+                applyNegativeMarking = mappedSection === 'Verbal Ability';
+            }
+            marks = applyNegativeMarking ? markingOpts.incorrect : 0;
         } else {
             status = 'Awaiting Key';
             marks = 0;
