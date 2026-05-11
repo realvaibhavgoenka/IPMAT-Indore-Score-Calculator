@@ -34,7 +34,7 @@ const EXAM_PROFILES = [
         type: 'sectional', 
         overallCutoffs: null,
         sectionalCutoffs: {
-          'General': { 'Quantitative Ability SA': 20, 'Quantitative Ability MCQ': 33, 'Verbal Ability': 112 },
+          'General': { 'Quantitative Ability SA': 24, 'Quantitative Ability MCQ': 28, 'Verbal Ability': 112 },
           'EWS': { 'Quantitative Ability SA': 16, 'Quantitative Ability MCQ': 18, 'Verbal Ability': 87 },
           'NC-OBC': { 'Quantitative Ability SA': 12, 'Quantitative Ability MCQ': 15, 'Verbal Ability': 78 },
           'SC': { 'Quantitative Ability SA': 12, 'Quantitative Ability MCQ': 10, 'Verbal Ability': 65 },
@@ -323,8 +323,45 @@ export default function App() {
           console.error("Fetch request to backend failed", e);
       }
       
+      if (!htmlContent) {
+          console.log("Fallback to allorigins CORS proxy...");
+          try {
+              const fallbackRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`);
+              if (fallbackRes.ok) {
+                  const data = await fallbackRes.json();
+                  htmlContent = data.contents;
+              }
+          } catch (err) {
+              console.error("AllOrigins fallback failed:", err);
+          }
+      }
+
       if (!htmlContent || (!htmlContent.toLowerCase().includes('<table') && !htmlContent.toLowerCase().includes('question'))) {
-          throw new Error("Unable to fetch response sheet content from this URL. This can happen if the link has expired or if the exam portal blocks automated requests. Try copying its HTML Source manually and pasting it here instead.");
+          console.log("Fallback to corsproxy.io...");
+          try {
+              const fallbackRes = await fetch(`https://corsproxy.io/?${encodeURIComponent(targetUrl)}`);
+              if (fallbackRes.ok) {
+                  htmlContent = await fallbackRes.text();
+              }
+          } catch (err) {
+              console.error("Corsproxy fallback failed:", err);
+          }
+      }
+
+      if (!htmlContent || (!htmlContent.toLowerCase().includes('<table') && !htmlContent.toLowerCase().includes('question'))) {
+          console.log("Fallback to codetabs proxy...");
+          try {
+              const fallbackRes = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`);
+              if (fallbackRes.ok) {
+                  htmlContent = await fallbackRes.text();
+              }
+          } catch (err) {
+              console.error("Codetabs fallback failed:", err);
+          }
+      }
+
+      if (!htmlContent || (!htmlContent.toLowerCase().includes('<table') && !htmlContent.toLowerCase().includes('question'))) {
+          throw new Error("Unable to fetch response sheet content from this URL. This can happen if the link has expired or if the exam portal blocks automated requests. Try copying its HTML Source manually and pasting it here instead. If it keeps failing, try opening the sheet, Right Click -> View Page Source -> Copy All -> Paste here.");
       }
 
       setProcessingStage('analyzing');
