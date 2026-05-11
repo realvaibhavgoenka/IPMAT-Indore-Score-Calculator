@@ -8,6 +8,11 @@ import {
 
 const GOOGLE_APPS_SCRIPT_URL = import.meta.env.VITE_GOOGLE_APPS_SCRIPT_URL || 'https://script.google.com/macros/s/AKfycbx4Vs8mNi0FJmGqexcoIphPWENDbCWxaxMX0juOBpwpLADgFA-qz0L1fWaWw_TyHusebw/exec';
 
+// NOTE: If you are deploying to GitHub Pages, the .env file is ignored by Git,
+// so import.meta.env.VITE_GOOGLE_APPS_SCRIPT_URL will be undefined in the deployment!
+// To fix this, replace the fallback URL above with your ACTUAL Google Apps Script URL,
+// or provide the VITE_GOOGLE_APPS_SCRIPT_URL in your GitHub Actions secrets.
+
 const mapStandardSection = (rawName) => {
     const lower = rawName.toLowerCase();
     if (lower.includes('verbal') || lower.includes('english') || lower.includes('varc') || lower.includes('comprehension')) return 'Verbal Ability';
@@ -215,6 +220,8 @@ export default function App() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [urlInput, setUrlInput] = useState('');
+  const [htmlInput, setHtmlInput] = useState('');
+  const [inputMode, setInputMode] = useState('url'); // 'url' or 'html'
   
   const [questions, setQuestions] = useState([]);
   const [summary, setSummary] = useState([]);
@@ -233,11 +240,15 @@ export default function App() {
     setSaveStatus('saving');
     // Using original mock logic if GAS is not setup
     try {
-        await fetch(GOOGLE_APPS_SCRIPT_URL, {
+        // Appending query parameters helps in case the 302 redirect turns the POST into a GET
+        const urlWithParams = new URL(GOOGLE_APPS_SCRIPT_URL);
+        Object.keys(payload).forEach(key => urlWithParams.searchParams.append(key, payload[key]));
+        
+        await fetch(urlWithParams.toString(), {
             method: 'POST',
             mode: 'no-cors', 
             headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload) // Maintain JSON payload for standard doPost reading
         });
         setSaveStatus('saved');
     } catch (e) {
@@ -252,9 +263,9 @@ export default function App() {
         return;
     }
     
-    const inputStr = urlInput.trim();
+    const inputStr = inputMode === 'url' ? urlInput.trim() : htmlInput.trim();
     if (!inputStr) {
-        setError("Please enter a valid URL.");
+        setError(inputMode === 'url' ? "Please enter a valid URL." : "Please paste the HTML content.");
         return;
     }
 
@@ -264,25 +275,31 @@ export default function App() {
     setSummary([]);
     setTotalScore(null);
     
-    if (inputStr.toLowerCase().includes('<html') || inputStr.toLowerCase().includes('</div>') || inputStr.toLowerCase().includes('<table')) {
-        setError("Please enter the response sheet URL, not the HTML source.");
+    if (inputMode === 'url' && (inputStr.toLowerCase().includes('<html') || inputStr.toLowerCase().includes('</div>') || inputStr.toLowerCase().includes('<table'))) {
+        setError("Please select 'Paste HTML Code' above if you are trying to paste source code.");
         setIsProcessing(false);
         return;
     }
 
-    try { new URL(inputStr); } catch (_) {
-        setError("Invalid URL format. Please ensure it starts with http:// or https://. If blocked, try again later.");
-        setIsProcessing(false);
-        return;
+    if (inputMode === 'url') {
+        try { new URL(inputStr); } catch (_) {
+            setError("Invalid URL format. Please ensure it starts with http:// or https://.");
+            setIsProcessing(false);
+            return;
+        }
     }
 
     setProcessingStage('fetching');
 
     try {
-      const targetUrl = inputStr;
+      let targetUrl = inputMode === 'url' ? inputStr : "Pasted HTML Code";
       let htmlContent = "";
+      let fetchErrors = [];
 
-      // List of robust CORS proxies
+      if (inputMode === 'html') {
+          htmlContent = inputStr;
+      } else {
+          // List of robust CORS proxies
       const proxyUrls = [
          `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
          `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`,
@@ -366,15 +383,16 @@ export default function App() {
               fetchErrors.push(`AllOrigins proxy failed: ${err.message}`);
           }
       }
+      }
 
       if (!htmlContent || (!htmlContent.toLowerCase().includes('<table') && !htmlContent.toLowerCase().includes('question'))) {
           console.error("Fetch errors:", fetchErrors.join(' | '));
-          let errorMsg = `Unable to fetch response sheet content from this URL. This can happen if the link has expired or if the exam portal blocks automated requests. Ensure your link is correct and publicly accessible.`;
+          let errorMsg = `Unable to fetch response sheet content from this URL. This can happen if the link has expired or if the exam portal blocks automated requests. Ensure your link is correct.`;
           
-          if (!targetUrl.toLowerCase().endsWith('.html') && !targetUrl.toLowerCase().endsWith('.htm')) {
+          if (!targetUrl.toLowerCase().endsWith('.html') && !targetUrl.toLowerCase().endsWith('.htm') && inputMode === 'url') {
               errorMsg += ` PLEASE NOTE: Your URL does not end in .html. Please make sure you copied the ENTIRE link.`;
           }
-          
+          errorMsg += `\n\n💡 TIP: Try switching to "Paste HTML Code" above, then right-click your response sheet -> View Source -> Select All -> Copy, and paste it directly!`;
           throw new Error(errorMsg);
       }
 
