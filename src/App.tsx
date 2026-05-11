@@ -146,8 +146,8 @@ const EXAM_PROFILES = [
 
 const BATCHES = [ 
   { name: 'Mentorship Batch IPMAT & JIPMAT 2026', href: 'https://www.entranceug.com/s/pages/mentorship-batch', icon: BookOpen, description: 'Daily Tasks, Accountability & Customized Strategy' }, 
-  { name: '1-on-1 Session', href: 'https://pages.razorpay.com/1-on-1-entrance-ug', icon: Target, description: 'Get counselled & be Clear' }, 
-  { name: 'Personal Mock Interview', href: 'https://pages.razorpay.com/1-on-1-entrance-ug', icon: GraduationCap, description: '100% Success Rate in Interview Prep' }, 
+  { name: '1-on-1 Session', href: 'https://www.entranceug.com/s/pages/ipmat-pi-batch', icon: Target, description: 'Get counselled & be Clear' }, 
+  { name: 'Personal Mock Interview', href: 'https://www.entranceug.com/s/pages/ipmat-pi-batch', icon: GraduationCap, description: '100% Success Rate in Interview Prep' }, 
 ];
 
 const Navbar = () => { 
@@ -196,7 +196,7 @@ const Navbar = () => {
           <li><a href="https://www.entranceug.com/s/pages/pricing">IPMAT Mocks</a></li>
           <li><a href="/s/pages/cuet-mocks-plans">CUET Mocks</a></li>
           <li><a href="https://www.entranceug.com/products">Free Resources</a></li>
-          <li><a href="https://pages.razorpay.com/1-on-1-entrance-ug">1-on-1 Interview</a></li>
+          <li><a href="https://www.entranceug.com/s/pages/ipmat-pi-batch">1-on-1 Interview</a></li>
           <li><a href="/courses/Reading-Comprehension--68ea3a01f8e35916c1d9d314">Daily RC's</a></li>
           <li>
             <div className="eug-enroll-group"> 
@@ -954,8 +954,16 @@ export default function App() {
                     <img src="https://loud-blush-0ssamfkjol.edgeone.app/www.entranceug.com%20(1).png" alt="IPMAT PI Interview Batch" className="w-full h-auto object-cover" />
                 </div>
                 <div className="p-8 pb-8 pt-6 relative z-10 flex flex-col gap-4">
-                    <a href="https://pages.razorpay.com/1-on-1-entrance-ug" target="_blank" rel="noreferrer" className="relative z-10 inline-flex items-center justify-center w-full px-6 py-4 bg-[#00FF84] text-[#003B5C] rounded-xl font-bold hover:bg-[#00e676] transition-colors gap-2 shadow-lg shadow-[#00FF84]/20">
-                        Book Interview Slot <ExternalLink className="w-5 h-5" />
+                    <div>
+                        <h3 className="text-xl font-bold text-white mb-3">IPMAT PI Batch</h3>
+                        <ul className="space-y-2 mb-2">
+                            <li className="flex items-center gap-2 text-sm text-blue-50 font-medium"><CheckCircle className="w-4 h-4 text-[#00FF84]" /> Personal Mock Interviews</li>
+                            <li className="flex items-center gap-2 text-sm text-blue-50 font-medium"><CheckCircle className="w-4 h-4 text-[#00FF84]" /> Detailed Feedback</li>
+                            <li className="flex items-center gap-2 text-sm text-blue-50 font-medium"><CheckCircle className="w-4 h-4 text-[#00FF84]" /> 100% Success Rate in Interview Prep</li>
+                        </ul>
+                    </div>
+                    <a href="https://www.entranceug.com/s/pages/ipmat-pi-batch" target="_blank" rel="noreferrer" className="relative z-10 inline-flex items-center justify-center w-full px-6 py-4 bg-[#00FF84] text-[#003B5C] rounded-xl font-bold hover:bg-[#00e676] transition-colors gap-2 shadow-lg shadow-[#00FF84]/20 mt-2">
+                        Click here to get more details <ExternalLink className="w-5 h-5" />
                     </a>
                 </div>
             </motion.div>
