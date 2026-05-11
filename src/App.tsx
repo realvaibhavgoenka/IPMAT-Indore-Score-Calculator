@@ -291,10 +291,11 @@ export default function App() {
       ];
 
       // Also try backend for local environment
+      let fetchErrors = [];
       if (window.location.hostname === 'localhost' || window.location.hostname.includes('.run.app')) {
           try {
               const controller = new AbortController();
-              const timeoutId = setTimeout(() => controller.abort(), 10000);
+              const timeoutId = setTimeout(() => controller.abort(), 30000);
               const res = await fetch('/api/fetch-url', { 
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -306,9 +307,15 @@ export default function App() {
                   const data = await res.json();
                   if (data.contents && (data.contents.toLowerCase().includes('<table') || data.contents.toLowerCase().includes('question'))) {
                       htmlContent = data.contents;
+                  } else {
+                      fetchErrors.push("Backend fetch returned no valid content");
                   }
+              } else {
+                  fetchErrors.push("Backend fetch status: " + res.status);
               }
-          } catch(e) {}
+          } catch(e) {
+              fetchErrors.push("Backend fetch error: " + e.message);
+          }
       }
 
       // Try proxies sequentially
@@ -317,7 +324,7 @@ export default function App() {
               try {
                   console.log("Trying proxy: ", proxy);
                   const controller = new AbortController();
-                  const timeoutId = setTimeout(() => controller.abort(), 10000);
+                  const timeoutId = setTimeout(() => controller.abort(), 30000);
                   const res = await fetch(proxy, { signal: controller.signal });
                   clearTimeout(timeoutId);
                   if (res.ok) {
@@ -325,10 +332,14 @@ export default function App() {
                       if (text && (text.toLowerCase().includes('<table') || text.toLowerCase().includes('question'))) {
                           htmlContent = text;
                           break;
+                      } else {
+                          fetchErrors.push(`Proxy ${proxy} returned no valid content`);
                       }
+                  } else {
+                      fetchErrors.push(`Proxy ${proxy} status: ${res.status}`);
                   }
               } catch(e) {
-                  console.error("Proxy failed: ", proxy);
+                  fetchErrors.push(`Proxy ${proxy} failed: ${e.message}`);
               }
           }
       }
@@ -337,19 +348,27 @@ export default function App() {
       if (!htmlContent) {
           try {
               console.log("Fallback to allorigins JSON proxy...");
-              const fallbackRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`);
+              const controller = new AbortController();
+              const timeoutId = setTimeout(() => controller.abort(), 30000);
+              const fallbackRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`, { signal: controller.signal });
+              clearTimeout(timeoutId);
               if (fallbackRes.ok) {
                   const data = await fallbackRes.json();
                   if (data.contents && (data.contents.toLowerCase().includes('<table') || data.contents.toLowerCase().includes('question'))) {
                       htmlContent = data.contents;
+                  } else {
+                      fetchErrors.push(`AllOrigins Proxy returned no valid content`);
                   }
+              } else {
+                  fetchErrors.push(`AllOrigins proxy status: ${fallbackRes.status}`);
               }
           } catch (err) {
-              console.error("AllOrigins fallback failed:", err);
+              fetchErrors.push(`AllOrigins proxy failed: ${err.message}`);
           }
       }
 
       if (!htmlContent || (!htmlContent.toLowerCase().includes('<table') && !htmlContent.toLowerCase().includes('question'))) {
+          console.error("Fetch errors:", fetchErrors.join(' | '));
           throw new Error("Unable to fetch response sheet content from this URL. This can happen if the link has expired or if the exam portal blocks automated requests. Ensure your link is correct and publicly accessible.");
       }
 
@@ -573,7 +592,10 @@ export default function App() {
         } else if (!chosenOptIndex) {
             status = 'Unattempted';
             marks = markingOpts.unattempted;
-        } else if (correctOptIndex && chosenOptIndex.toString() === correctOptIndex.toString()) {
+        } else if (correctOptIndex && (
+            chosenOptIndex.toString().trim().toLowerCase() === correctOptIndex.toString().trim().toLowerCase() ||
+            (isNumerical && !isNaN(parseFloat(chosenOptIndex)) && !isNaN(parseFloat(correctOptIndex)) && parseFloat(chosenOptIndex) === parseFloat(correctOptIndex))
+        )) {
             status = 'Correct';
             marks = markingOpts.correct;
         } else if (correctOptIndex) {

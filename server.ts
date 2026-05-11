@@ -10,35 +10,27 @@ async function startServer() {
   app.use(express.json());
 
   // API Route to proxy the fetch request
-  app.post("/api/fetch-url", (req, res) => {
+  app.post("/api/fetch-url", async (req, res) => {
     const { url } = req.body;
     
     if (!url || !url.startsWith("http")) {
       return res.status(400).json({ error: "Invalid URL" });
     }
 
-    const options = {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-      }
-    };
-
-    https.get(url, options, (getRes) => {
-      let data = '';
-      getRes.on('data', (chunk) => {
-        data += chunk;
-      });
-      getRes.on('end', () => {
-        if (getRes.statusCode && (getRes.statusCode < 200 || getRes.statusCode >= 400)) {
-            return res.status(getRes.statusCode || 500).json({ error: `Failed to fetch: ${getRes.statusCode}`, content: data });
+    try {
+      const fetchObj = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5',
         }
-        res.json({ contents: data });
       });
-    }).on('error', (err) => {
-      res.status(500).json({ error: err.message });
-    });
+      
+      const contents = await fetchObj.text();
+      res.json({ contents });
+    } catch (error) {
+      res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+    }
   });
 
   // Vite middleware for development
