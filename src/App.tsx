@@ -34,7 +34,7 @@ const EXAM_PROFILES = [
         type: 'sectional', 
         overallCutoffs: null,
         sectionalCutoffs: {
-          'General': { 'Quantitative Ability SA': 24, 'Quantitative Ability MCQ': 28, 'Verbal Ability': 112 },
+          'General': { 'Quantitative Ability SA': 20, 'Quantitative Ability MCQ': 33, 'Verbal Ability': 112 },
           'EWS': { 'Quantitative Ability SA': 16, 'Quantitative Ability MCQ': 18, 'Verbal Ability': 87 },
           'NC-OBC': { 'Quantitative Ability SA': 12, 'Quantitative Ability MCQ': 15, 'Verbal Ability': 78 },
           'SC': { 'Quantitative Ability SA': 12, 'Quantitative Ability MCQ': 10, 'Verbal Ability': 65 },
