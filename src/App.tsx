@@ -271,11 +271,15 @@ export default function App() {
             const results = processHtmlContent(inputStr);
             if (results) {
                 setProcessingStage('saving');
+                const finalName = results.extractedName && results.extractedName !== studentName 
+                  ? results.extractedName 
+                  : studentName;
+                  
                 await saveDataToBackend({
-                    name: studentName, email, phone,
+                    name: finalName, email, phone,
                     totalScore: results.grandTotal,
                     exam: results.examName,
-                    responseSheetUrl: urlInput
+                    responseSheetUrl: 'HTML Source Pasted'
                 });
                 setProcessingStage('completed');
             }
@@ -324,6 +328,18 @@ export default function App() {
       }
       
       if (!htmlContent) {
+          console.log("Fallback to allorigins raw...");
+          try {
+              const fallbackRes = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`);
+              if (fallbackRes.ok) {
+                  htmlContent = await fallbackRes.text();
+              }
+          } catch (err) {
+              console.error("AllOrigins raw fallback failed:", err);
+          }
+      }
+
+      if (!htmlContent || (!htmlContent.toLowerCase().includes('<table') && !htmlContent.toLowerCase().includes('question'))) {
           console.log("Fallback to allorigins CORS proxy...");
           try {
               const fallbackRes = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`);
@@ -349,6 +365,30 @@ export default function App() {
       }
 
       if (!htmlContent || (!htmlContent.toLowerCase().includes('<table') && !htmlContent.toLowerCase().includes('question'))) {
+          console.log("Fallback to thingproxy...");
+          try {
+              const fallbackRes = await fetch(`https://thingproxy.freeboard.io/fetch/${targetUrl}`);
+              if (fallbackRes.ok) {
+                  htmlContent = await fallbackRes.text();
+              }
+          } catch (err) {
+              console.error("Thingproxy fallback failed:", err);
+          }
+      }
+
+      if (!htmlContent || (!htmlContent.toLowerCase().includes('<table') && !htmlContent.toLowerCase().includes('question'))) {
+          console.log("Fallback to jsonp proxy...");
+          try {
+              const fallbackRes = await fetch(`https://jsonp.afeld.me/?url=${encodeURIComponent(targetUrl)}`);
+              if (fallbackRes.ok) {
+                  htmlContent = await fallbackRes.text();
+              }
+          } catch (err) {
+              console.error("jsonp fallback failed:", err);
+          }
+      }
+
+      if (!htmlContent || (!htmlContent.toLowerCase().includes('<table') && !htmlContent.toLowerCase().includes('question'))) {
           console.log("Fallback to codetabs proxy...");
           try {
               const fallbackRes = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`);
@@ -369,11 +409,15 @@ export default function App() {
       
       if (results) {
         setProcessingStage('saving');
+        const finalName = results.extractedName && results.extractedName !== studentName 
+          ? results.extractedName 
+          : studentName;
+          
         await saveDataToBackend({
-            name: studentName, email, phone,
+            name: finalName, email, phone,
             totalScore: results.grandTotal,
             exam: results.examName,
-            responseSheetUrl: urlInput
+            responseSheetUrl: targetUrl
         });
         setProcessingStage('completed');
       }
@@ -389,6 +433,27 @@ export default function App() {
   const processHtmlContent = (htmlString) => {
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlString, 'text/html');
+
+    // Attempt to extract applicant name
+    let extractedName = null;
+    const allTds = Array.from(doc.querySelectorAll('td'));
+    for (let i = 0; i < allTds.length; i++) {
+        const text = allTds[i].textContent?.trim().toLowerCase() || '';
+        if (text === "candidate name" || text === "candidate's name" || text === "applicant name") {
+            const nextTd = allTds[i].nextElementSibling;
+            if (nextTd && nextTd.tagName.toLowerCase() === 'td') {
+                extractedName = nextTd.textContent?.trim();
+                break;
+            } else if (allTds[i + 1]) {
+                extractedName = allTds[i + 1].textContent?.trim();
+                break;
+            }
+        }
+    }
+    
+    if (extractedName && extractedName !== studentName) {
+        setStudentName(extractedName);
+    }
     
     let questionPanels = Array.from(doc.querySelectorAll('.question-pnl, .questionRowTbl, table.menu-tbl'));
     
@@ -577,7 +642,7 @@ export default function App() {
     setSummary(summaryData);
     setTotalScore(grandTotal);
 
-    return { grandTotal, summaryData, examName: fallbackExam.name };
+    return { grandTotal, summaryData, examName: fallbackExam.name, extractedName };
   };
 
   const generateShareText = () => {
