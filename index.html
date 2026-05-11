@@ -18,6 +18,18 @@
     <meta name="twitter:title" content="EntranceUG Score Calculator" />
     <meta name="twitter:description" content="Calculate your IPMAT score and predict your admission chances instantly." />
     <meta name="twitter:image" content="https://calculator.entranceug.com/share-image.png" />
+    <!-- Polyfill/fix for extensions that attempt to monkey-patch window.fetch and fail -->
+    <script>
+      (function() {
+        var ogFetch = window.fetch;
+        Object.defineProperty(window, 'fetch', {
+          configurable: true,
+          enumerable: true,
+          get: function() { return ogFetch; },
+          set: function(val) { ogFetch = val; }
+        });
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

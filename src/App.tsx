@@ -265,30 +265,8 @@ export default function App() {
     setTotalScore(null);
     
     if (inputStr.toLowerCase().includes('<html') || inputStr.toLowerCase().includes('</div>') || inputStr.toLowerCase().includes('<table')) {
-        setProcessingStage('analyzing');
-        try {
-            await new Promise(r => setTimeout(r, 100));
-            const results = processHtmlContent(inputStr);
-            if (results) {
-                setProcessingStage('saving');
-                const finalName = results.extractedName && results.extractedName !== studentName 
-                  ? results.extractedName 
-                  : studentName;
-                  
-                await saveDataToBackend({
-                    name: finalName, email, phone,
-                    totalScore: results.grandTotal,
-                    exam: results.examName,
-                    responseSheetUrl: 'HTML Source Pasted'
-                });
-                setProcessingStage('completed');
-            }
-        } catch(err) {
-            setError(err.message || "Failed to parse HTML.");
-            setProcessingStage('idle');
-        } finally {
-            setIsProcessing(false);
-        }
+        setError("Please enter the response sheet URL, not the HTML source.");
+        setIsProcessing(false);
         return;
     }
 
