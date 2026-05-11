@@ -412,6 +412,11 @@ export default function App() {
         const qIdMatch = metaText.match(/Question ID\s*:\s*(\d+)/i) || metaText.match(/Q\.\s*Id\s*:\s*(\d+)/i);
         const qId = qIdMatch ? qIdMatch[1] : `Unknown-${index}`;
         
+        const qTypeMatch = metaText.match(/Question Type\s*:\s*([A-Za-z]+)/i) || textContent.match(/Question Type\s*:\s*([A-Za-z]+)/i);
+        const qType = qTypeMatch ? qTypeMatch[1].toUpperCase() : '';
+        const mappedSection = mapStandardSection(currentSection);
+        const isNumerical = qType === 'SA' || qType === 'SUBJECTIVE' || mappedSection === 'Quantitative Ability SA';
+        
         let chosenOptIndex = null;
         const chosenMatch = metaText.match(/(?:Chosen Option|Given Answer|Candidate Answer)\s*:\s*([0-9A-Za-z.\-]+)/i);
         if (chosenMatch) chosenOptIndex = chosenMatch[1].trim();
@@ -502,7 +507,7 @@ export default function App() {
             marks = markingOpts.correct;
         } else if (correctOptIndex) {
             status = 'Incorrect';
-            marks = markingOpts.incorrect;
+            marks = isNumerical ? 0 : markingOpts.incorrect;
         } else {
             status = 'Awaiting Key';
             marks = 0;
@@ -942,26 +947,17 @@ export default function App() {
                whileInView={{ opacity: 1, y: 0 }}
                viewport={{ once: true }}
                transition={{ delay: 0.1 }}
-               className="bg-gradient-to-br from-[#003B5C] to-[#015f92] rounded-[32px] p-8 shadow-md border border-[#004e7a] relative overflow-hidden group"
+               className="bg-gradient-to-br from-[#003B5C] to-[#015f92] rounded-[32px] shadow-md border border-[#004e7a] relative overflow-hidden group flex flex-col"
             >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 opacity-50 group-hover:scale-110 transition-transform"></div>
-                <div className="flex items-center gap-4 mb-6 relative z-10">
-                    <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center text-[#00FF84]">
-                        <User className="w-7 h-7" />
-                    </div>
-                    <div>
-                        <h3 className="text-xl font-bold text-white">1-on-1 Interviews</h3>
-                        <p className="text-sm text-blue-100 font-medium">Personalised Mock Interviews by Top Rankers</p>
-                    </div>
+                <div className="flex-1 w-full relative">
+                    <img src="https://loud-blush-0ssamfkjol.edgeone.app/www.entranceug.com%20(1).png" alt="IPMAT PI Interview Batch" className="w-full h-auto object-cover" />
                 </div>
-                <ul className="space-y-3 mb-8 relative z-10">
-                    <li className="flex items-center gap-3 text-sm text-blue-50 font-medium"><CheckCircle className="w-5 h-5 text-[#00FF84]" /> Personal Mock Interviews</li>
-                    <li className="flex items-center gap-3 text-sm text-blue-50 font-medium"><CheckCircle className="w-5 h-5 text-[#00FF84]" /> Detailed Feedback</li>
-                    <li className="flex items-center gap-3 text-sm text-blue-50 font-medium"><CheckCircle className="w-5 h-5 text-[#00FF84]" /> 100% Success Rate in Interview Prep</li>
-                </ul>
-                <a href="https://pages.razorpay.com/1-on-1-entrance-ug" target="_blank" rel="noreferrer" className="relative z-10 inline-flex items-center justify-center w-full px-6 py-4 bg-[#00FF84] text-[#003B5C] rounded-xl font-bold hover:bg-[#00e676] transition-colors gap-2 shadow-lg shadow-[#00FF84]/20">
-                    Book Interview Slot <ExternalLink className="w-5 h-5" />
-                </a>
+                <div className="p-8 pb-8 pt-6 relative z-10 flex flex-col gap-4">
+                    <a href="https://pages.razorpay.com/1-on-1-entrance-ug" target="_blank" rel="noreferrer" className="relative z-10 inline-flex items-center justify-center w-full px-6 py-4 bg-[#00FF84] text-[#003B5C] rounded-xl font-bold hover:bg-[#00e676] transition-colors gap-2 shadow-lg shadow-[#00FF84]/20">
+                        Book Interview Slot <ExternalLink className="w-5 h-5" />
+                    </a>
+                </div>
             </motion.div>
         </div>
       </div>
