@@ -383,6 +383,18 @@ export default function App() {
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlString, 'text/html');
 
+    const extractTextWithSpaces = (el) => {
+      let text = '';
+      for (const node of el.childNodes) {
+        if (node.nodeType === 3 /* Node.TEXT_NODE */) {
+            text += node.textContent + ' ';
+        } else {
+            text += extractTextWithSpaces(node) + ' ';
+        }
+      }
+      return text.trim();
+    };
+
     // Attempt to extract applicant name
     let extractedName = null;
     const allTds = Array.from(doc.querySelectorAll('td'));
@@ -447,9 +459,9 @@ export default function App() {
              }
         }
 
-        const textContent = panel.textContent || '';
+        const textContent = extractTextWithSpaces(panel).replace(/\s+/g, ' ');
         const metadataTable = panel.querySelector('.menu-tbl') || panel;
-        const metaText = metadataTable.textContent || '';
+        const metaText = extractTextWithSpaces(metadataTable).replace(/\s+/g, ' ');
         
         let isDropped = false;
         const statusMatch = metaText.match(/Status\s*:\s*([A-Za-z]+)/i);
@@ -469,7 +481,10 @@ export default function App() {
         const isNumerical = qType === 'SA' || qType === 'SUBJECTIVE' || mappedSection === 'Quantitative Ability SA';
         
         let chosenOptIndex = null;
-        const chosenMatch = metaText.match(/(?:Chosen Option|Given Answer|Candidate Answer)\s*:\s*([0-9A-Za-z.\-]+)/i);
+        let chosenMatch = metaText.match(/(?:Chosen Option|Given Answer|Candidate Answer)\s*:\s*([0-9A-Za-z.\-]+)/i);
+        if (!chosenMatch) {
+            chosenMatch = textContent.match(/(?:Chosen Option|Given Answer|Candidate Answer)\s*:\s*([0-9A-Za-z.\-]+)/i);
+        }
         if (chosenMatch) chosenOptIndex = chosenMatch[1].trim();
         
         if (!chosenOptIndex || chosenOptIndex === '--' || chosenOptIndex === '-' || chosenOptIndex.toLowerCase() === 'not answered' || chosenOptIndex.toLowerCase() === 'left blank') {
@@ -497,23 +512,28 @@ export default function App() {
         if (optionRows.length > 0) {
             // We found the correct option element directly
             let rightTd = optionRows[0];
-            let txt = rightTd.textContent || '';
+            let txt = extractTextWithSpaces(rightTd).replace(/\s+/g, ' ');
             // If it's an image, maybe we can't extract the number. Try standard extraction first
             txt = txt.replace(/^\s*Ans\s*/i, '').trim();
+            
+            const possibleMatch = txt.match(/Possible Answer\s*:\s*(.+)/i);
             const indexMatch = txt.match(/^([0-9A-Za-z])(?:[.)]|\s)/); 
-            if (indexMatch) {
+            
+            if (possibleMatch) {
+                correctOptIndex = possibleMatch[1].trim();
+            } else if (indexMatch) {
                 correctOptIndex = indexMatch[1].trim();
             } else {
                 // If it's like <td><img src="correct.png"/></td> and sibling is text?
                 const sibling = rightTd.nextElementSibling;
                 if (sibling) {
-                    const sibTxt = (sibling.textContent || '').replace(/^\s*Ans\s*/i, '').trim();
+                    const sibTxt = (extractTextWithSpaces(sibling)).replace(/\s+/g, ' ').replace(/^\s*Ans\s*/i, '').trim();
                     const sibMatch = sibTxt.match(/^([0-9A-Za-z])(?:[.)]|\s)/); 
                     if (sibMatch) correctOptIndex = sibMatch[1].trim();
                     else correctOptIndex = sibTxt;
                 } else if (rightTd.parentElement) {
                     // Try to extract from the parent row text
-                    const parTxt = (rightTd.parentElement.textContent || '').replace(/^\s*Ans\s*/i, '').trim();
+                    const parTxt = (extractTextWithSpaces(rightTd.parentElement)).replace(/\s+/g, ' ').replace(/^\s*Ans\s*/i, '').trim();
                     const parMatch = parTxt.match(/^([0-9A-Za-z])(?:[.)]|\s)/); 
                     if (parMatch) correctOptIndex = parMatch[1].trim();
                 }
