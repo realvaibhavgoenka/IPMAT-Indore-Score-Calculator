@@ -220,8 +220,6 @@ export default function App() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [urlInput, setUrlInput] = useState('');
-  const [htmlInput, setHtmlInput] = useState('');
-  const [inputMode, setInputMode] = useState('url'); // 'url' or 'html'
   
   const [questions, setQuestions] = useState([]);
   const [summary, setSummary] = useState([]);
@@ -263,9 +261,9 @@ export default function App() {
         return;
     }
     
-    const inputStr = inputMode === 'url' ? urlInput.trim() : htmlInput.trim();
+    const inputStr = urlInput.trim();
     if (!inputStr) {
-        setError(inputMode === 'url' ? "Please enter a valid URL." : "Please paste the HTML content.");
+        setError("Please enter a valid URL.");
         return;
     }
 
@@ -275,30 +273,23 @@ export default function App() {
     setSummary([]);
     setTotalScore(null);
     
-    if (inputMode === 'url' && (inputStr.toLowerCase().includes('<html') || inputStr.toLowerCase().includes('</div>') || inputStr.toLowerCase().includes('<table'))) {
-        setError("Please select 'Paste HTML Code' above if you are trying to paste source code.");
+    if (inputStr.toLowerCase().includes('<html') || inputStr.toLowerCase().includes('</div>') || inputStr.toLowerCase().includes('<table')) {
+        setError("Please enter the response sheet URL, not the HTML source.");
         setIsProcessing(false);
         return;
     }
 
-    if (inputMode === 'url') {
-        try { new URL(inputStr); } catch (_) {
-            setError("Invalid URL format. Please ensure it starts with http:// or https://.");
-            setIsProcessing(false);
-            return;
-        }
+    try { new URL(inputStr); } catch (_) {
+        setError("Invalid URL format. Please ensure it starts with http:// or https://. If blocked, try again later.");
+        setIsProcessing(false);
+        return;
     }
 
     setProcessingStage('fetching');
 
     try {
-      let targetUrl = inputMode === 'url' ? inputStr : "Pasted HTML Code";
+      const targetUrl = inputStr;
       let htmlContent = "";
-      let fetchErrors = [];
-
-      if (inputMode === 'html') {
-          htmlContent = inputStr;
-      } else {
           // List of robust CORS proxies
       const proxyUrls = [
          `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
@@ -383,16 +374,13 @@ export default function App() {
               fetchErrors.push(`AllOrigins proxy failed: ${err.message}`);
           }
       }
-      }
-
       if (!htmlContent || (!htmlContent.toLowerCase().includes('<table') && !htmlContent.toLowerCase().includes('question'))) {
           console.error("Fetch errors:", fetchErrors.join(' | '));
-          let errorMsg = `Unable to fetch response sheet content from this URL. This can happen if the link has expired or if the exam portal blocks automated requests. Ensure your link is correct.`;
+          let errorMsg = `Unable to fetch response sheet content from this URL. This can happen if the link has expired or if the exam portal blocks automated requests. Ensure your link is correct and publicly accessible. (Details: ${fetchErrors.join(' | ')})`;
           
-          if (!targetUrl.toLowerCase().endsWith('.html') && !targetUrl.toLowerCase().endsWith('.htm') && inputMode === 'url') {
+          if (!targetUrl.toLowerCase().endsWith('.html') && !targetUrl.toLowerCase().endsWith('.htm')) {
               errorMsg += ` PLEASE NOTE: Your URL does not end in .html. Please make sure you copied the ENTIRE link.`;
           }
-          errorMsg += `\n\n💡 TIP: Try switching to "Paste HTML Code" above, then right-click your response sheet -> View Source -> Select All -> Copy, and paste it directly!`;
           throw new Error(errorMsg);
       }
 
